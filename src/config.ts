@@ -15,13 +15,13 @@ export const config = {
   },
   filters: {
     titleInclude: ["developer", "engineer"] as string[],
-    titleExclude: ["lead", "manager", "principal", "staff"] as string[],
+    titleExclude: ["lead", "manager", "principal", "junior", "intern", "infrastructure", "devops", "advocate", "security", "support"] as string[],
     maxAgeDays: 30,
     matchMode: "word" as "word" | "substring",
     includeIfDateMissing: true,
-    remoteOnly: true,
+    remoteOnly: false,
     allowedLocations: [] as string[],
-    allowedEmploymentTypes: ["FullTime"] as string[],
+    allowedEmploymentTypes: ["FullTime", "Contract"] as string[],
   },
   seenStore: {
     file: "data/seen.json",

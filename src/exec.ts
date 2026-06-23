@@ -1,7 +1,7 @@
 import type { Job } from "./types";
 import type { JobSource } from "./sources";
 import { exec as execFilter, type JobFilter } from "./filter";
-import type { SeenStore } from "./seen";
+import type { SeenStore } from "./seen-store";
 import type { config } from "./config";
 
 export interface RunResult {

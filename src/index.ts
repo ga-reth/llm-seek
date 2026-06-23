@@ -10,7 +10,7 @@ import {
   EmploymentTypeFilter,
 } from "./filter";
 import { loadSlugs } from "./slugs/slug-source";
-import { SeenStore } from "./seen";
+import { SeenStore } from "./seen-store";
 import { exec } from "./exec";
 import { padded } from "./lib/utils";
 

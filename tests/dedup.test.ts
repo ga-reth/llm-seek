@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { writeFileSync, rmSync, mkdirSync, existsSync, readFileSync } from "fs";
-import { SeenStore } from "../src/seen";
+import { SeenStore } from "../src/seen-store";
 
 const TEST_FILE = "data/seen-test.json";
 
