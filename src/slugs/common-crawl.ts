@@ -83,21 +83,32 @@ export async function discoverSlugs(): Promise<string[]> {
     throw new Error(`[cc] failed to fetch collinfo: ${err}`);
   }
 
-  const selected = collinfo.slice(0, crawls).map((c) => c.id);
-  console.log(`[cc] querying ${selected.length} crawls: ${selected.join(", ")}`);
+  const candidates = collinfo.map((c) => c.id);
+  console.log(`[cc] ${candidates.length} crawls available, targeting ${crawls} successful ones`);
 
   const slugs = new Set<string>();
   let totalPages = 0;
   let totalCaptures = 0;
+  let successes = 0;
 
-  for (const crawlId of selected) {
+  for (const crawlId of candidates) {
+    if (successes >= crawls) break;
     console.log(`[cc] starting crawl ${crawlId}…`);
     const { pages, captures } = await queryCrawl(crawlId, slugs);
-    totalPages += pages;
-    totalCaptures += captures;
-    console.log(`[cc] ${crawlId}: ${pages} pages, ${captures} captures, ${slugs.size} unique slugs so far`);
+    if (pages > 0) {
+      successes++;
+      totalPages += pages;
+      totalCaptures += captures;
+      console.log(`[cc] ${crawlId}: ${pages} pages, ${captures} captures, ${slugs.size} unique slugs (${successes}/${crawls} done)`);
+    } else {
+      console.warn(`[cc] ${crawlId}: unavailable, trying next`);
+    }
   }
 
-  console.log(`[cc] done — ${totalPages} pages, ${totalCaptures} captures, ${slugs.size} unique slugs`);
+  if (successes === 0) {
+    throw new Error("[cc] no CDX indices responded — the service may be temporarily unavailable");
+  }
+
+  console.log(`[cc] done — ${successes} crawls, ${totalPages} pages, ${totalCaptures} captures, ${slugs.size} unique slugs`);
   return Array.from(slugs).sort();
 }

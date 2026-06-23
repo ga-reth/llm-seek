@@ -2,7 +2,7 @@
   "name": "job-seek",
   "scripts": {
     "run": "bun src/index.ts",
-    "discover": "bun src/discover.ts",
+    "discover": "bun src/discover-slugs.ts",
     "test": "bun test"
   },
   "dependencies": {

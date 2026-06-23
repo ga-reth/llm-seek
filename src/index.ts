@@ -15,10 +15,23 @@ import { exec } from "./exec";
 import { padded } from "./lib/utils";
 
 const verbose = process.argv.includes("--verbose");
+const dryRunFlag = process.argv.indexOf("--dry-run");
+const dryRun = dryRunFlag !== -1;
+const dryRunCount = (() => {
+  if (!dryRun) return 0;
+  const next = parseInt(process.argv[dryRunFlag + 1] ?? "", 10);
+  return isNaN(next) ? 10 : next;
+})();
 
 async function main(): Promise<void> {
-  const slugs = loadSlugs();
-  console.log(`[run] loaded ${slugs.length} slugs`);
+  let slugs = loadSlugs();
+
+  if (dryRun) {
+    slugs = slugs.slice(0, dryRunCount);
+    console.log(`[run] dry run — ${slugs.length} slugs, no files written`);
+  } else {
+    console.log(`[run] loaded ${slugs.length} slugs`);
+  }
 
   const source = new AshbySource(globalThis.fetch, config.sources.ashby.requestDelayMs);
   const filters = [
@@ -34,11 +47,12 @@ async function main(): Promise<void> {
     requestDelayMs: config.sources.ashby.requestDelayMs,
   });
 
-  mkdirSync("out", { recursive: true });
-  writeFileSync("out/matches.json", JSON.stringify(result.matched, null, 2));
-  writeFileSync("out/new.json", JSON.stringify(result.newMatches, null, 2));
-
-  seenStore.save(result.newMatches.map((j) => j.id));
+  if (!dryRun) {
+    mkdirSync("out", { recursive: true });
+    writeFileSync("out/matches.json", JSON.stringify(result.matched, null, 2));
+    writeFileSync("out/new_matches.json", JSON.stringify(result.newMatches, null, 2));
+    seenStore.save(result.newMatches.map((j) => j.id));
+  }
 
   const summary = `${result.slugCount} slugs · ${result.jobCount} jobs fetched · ${result.matched.length} matched · ${result.newMatches.length} new`;
   console.log(`\n[run] ${summary}\n`);
