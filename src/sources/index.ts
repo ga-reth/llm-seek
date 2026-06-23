@@ -1,5 +1,5 @@
-import type { Job } from "../types";
+import type { Job } from '../types';
 
 export interface JobSource {
-  fetch(slug: string): Promise<Job[]>;
+	fetch(slug: string): Promise<Job[]>;
 }

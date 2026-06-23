@@ -1,14 +1,18 @@
 {
-  "name": "job-seek",
-  "scripts": {
-    "run": "bun src/index.ts",
-    "discover": "bun src/discover-slugs.ts",
-    "test": "bun test"
-  },
-  "dependencies": {
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "bun-types": "^1.3.14"
-  }
+	"name": "job-seek",
+	"scripts": {
+		"run": "bun src/index.ts",
+		"discover": "bun src/discover-slugs.ts",
+		"test": "bun test",
+		"format": "biome format --write",
+		"check": "biome lint",
+		"lint": "biome lint --write"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.1",
+		"bun-types": "^1.3.14"
+	}
 }
