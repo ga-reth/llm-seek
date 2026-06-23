@@ -3,7 +3,7 @@ export const config = {
     ashby: {
       crawls: 4,
       requestDelayMs: 1000,
-      userAgent: "JobSeek/0.1 (hi@gareth-v.com)",
+      userAgent: "JobSeek/0.1",
     },
   },
   sources: {

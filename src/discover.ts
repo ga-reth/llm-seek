@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "fs";
-import { discoverSlugs } from "./slugs/commoncrawl";
+import { discoverSlugs } from "./slugs/common-crawl";
 
 async function main(): Promise<void> {
   console.log("[discover] starting Common Crawl slug discovery…");
