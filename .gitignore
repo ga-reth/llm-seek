@@ -1,0 +1,4 @@
+out/
+data/slugs.json
+data/seen.json
+node_modules/

@@ -1,0 +1,14 @@
+{
+  "name": "job-seek",
+  "scripts": {
+    "run": "bun src/run.ts",
+    "discover": "bun src/discover.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.14"
+  }
+}
