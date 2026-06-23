@@ -76,9 +76,9 @@ async function main(): Promise<void> {
 
 function printTable(jobs: Job[]): void {
   console.log(`NEW MATCHES (${jobs.length})`);
-  console.log("─".repeat(80));
-  console.log(padded("Title", 32) + padded("Company", 16) + padded("Location", 18) + padded("Age", 6) + "Type");
-  console.log("─".repeat(80));
+  console.log("─".repeat(144));
+  console.log(padded("Title", 96) + padded("Company", 16) + padded("Location", 18) + padded("Age", 6) + "Type");
+  console.log("─".repeat(144));
   const now = Date.now();
   for (const job of jobs) {
     const age = job.publishedAt
@@ -91,7 +91,7 @@ function printTable(jobs: Job[]): void {
           ? (job.location ?? "?") + " (?)"
           : (job.location ?? "?");
     console.log(
-      padded(job.title, 32) +
+      padded(job.title, 96) +
         padded(job.company, 16) +
         padded(loc, 18) +
         padded(age, 6) +
