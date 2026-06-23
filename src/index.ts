@@ -15,7 +15,7 @@ import { exec } from "./exec";
 import { padded } from "./lib/utils";
 
 const verbose = process.argv.includes("--verbose");
-const dryRunFlag = process.argv.indexOf("--dry-run");
+const dryRunFlag = process.argv.indexOf("--dryRun");
 const dryRun = dryRunFlag !== -1;
 const dryRunCount = (() => {
   if (!dryRun) return 0;
