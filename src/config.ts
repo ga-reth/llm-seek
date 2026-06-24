@@ -9,7 +9,6 @@ export const config = {
 	sources: {
 		ashby: {
 			slugsFile: 'data/slugs.json',
-			manualSlugsFile: 'data/slugs.manual.json',
 			requestDelayMs: 600,
 		},
 	},
