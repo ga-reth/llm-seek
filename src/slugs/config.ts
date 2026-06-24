@@ -32,7 +32,7 @@ export const config = {
 			'quality assurance',
 			'qa',
 			'linux',
-			'embedded'
+			'embedded',
 		] as string[],
 		maxAgeDays: 14,
 		matchMode: 'word' as 'word' | 'substring',

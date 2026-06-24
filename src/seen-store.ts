@@ -23,8 +23,13 @@ export class SeenStore {
 		try {
 			const raw = readFileSync(this.file, 'utf-8');
 			const data = JSON.parse(raw) as StoredData;
-			if (this.configFingerprint && data.configFingerprint !== this.configFingerprint) {
-				console.log('[seen] config changed — clearing seen store for fresh run');
+			if (
+				this.configFingerprint &&
+				data.configFingerprint !== this.configFingerprint
+			) {
+				console.log(
+					'[seen] config changed — clearing seen store for fresh run',
+				);
 				return new Set();
 			}
 			return new Set(
@@ -57,7 +62,10 @@ export class SeenStore {
 			.filter((id) => !existingSet.has(id))
 			.map((id): SeenEntry => ({ id, seenAt: now }));
 
-		const merged: StoredData = { configFingerprint: this.configFingerprint, entries: [...existingEntries, ...toAdd] };
+		const merged: StoredData = {
+			configFingerprint: this.configFingerprint,
+			entries: [...existingEntries, ...toAdd],
+		};
 		mkdirSync(dirname(this.file), { recursive: true });
 		writeFileSync(this.file, JSON.stringify(merged, null, 2));
 	}

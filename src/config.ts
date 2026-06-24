@@ -32,7 +32,7 @@ export const config = {
 			'quality assurance',
 			'qa',
 			'linux',
-			'embedded'
+			'embedded',
 		] as string[],
 		maxAgeDays: 14,
 		matchMode: 'word' as 'word' | 'substring',
@@ -44,5 +44,8 @@ export const config = {
 	seenStore: {
 		file: 'data/seen.json',
 		ttlDays: 45,
+	},
+	run: {
+		checkpointFile: 'data/checkpoint.json' as string | null,
 	},
 };

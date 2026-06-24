@@ -52,6 +52,7 @@ async function main(): Promise<void> {
 
 	const result = await exec(source, slugs, filters, seenStore, config, {
 		requestDelayMs: config.sources.ashby.requestDelayMs,
+		dryRun,
 	});
 
 	if (!dryRun) {

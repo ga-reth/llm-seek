@@ -1,4 +1,10 @@
 import type { config } from './config';
+import {
+	clearCheckpoint,
+	computeSlugFingerprint,
+	loadCheckpoint,
+	saveCheckpoint,
+} from './checkpoint';
 import { exec as execFilter, type JobFilter } from './filter';
 import type { SeenStore } from './seen-store';
 import type { JobSource } from './sources';
@@ -22,32 +28,62 @@ export async function exec(
 	filters: JobFilter[],
 	seenStore: SeenStore,
 	cfg: typeof config,
-	{ requestDelayMs = 0 }: { requestDelayMs?: number } = {},
+	{
+		requestDelayMs = 0,
+		dryRun = false,
+	}: { requestDelayMs?: number; dryRun?: boolean } = {},
 ): Promise<RunResult> {
-	const allJobs: Job[] = [];
-	for (let i = 0; i < slugs.length; i++) {
+	const checkpointFile = dryRun ? null : (cfg.run.checkpointFile ?? null);
+	const slugFp = checkpointFile ? computeSlugFingerprint(slugs) : '';
+	const filterFp = checkpointFile ? JSON.stringify(cfg.filters) : '';
+
+	let startIndex = 0;
+	let jobCount = 0;
+	const matched: Job[] = [];
+	const dropped: Array<{ job: Job; reason: string }> = [];
+
+	if (checkpointFile) {
+		const cp = loadCheckpoint(checkpointFile, slugFp, filterFp);
+		if (cp) {
+			startIndex = cp.resumeFromIndex;
+			jobCount = cp.jobCount;
+			matched.push(...cp.matched);
+			console.log(
+				`[checkpoint] resuming from slug ${startIndex}/${slugs.length}`,
+			);
+		}
+	}
+	for (let i = startIndex; i < slugs.length; i++) {
 		const jobs = await source.fetch(slugs[i]);
-		allJobs.push(...jobs);
+		jobCount += jobs.length;
+		for (const job of jobs) {
+			const result = execFilter(job, filters, cfg);
+			if (result.passed) {
+				matched.push(job);
+			} else {
+				dropped.push({ job, reason: result.reason ?? 'unknown' });
+			}
+		}
+		if (checkpointFile) {
+			saveCheckpoint(checkpointFile, {
+				slugFingerprint: slugFp,
+				filterFingerprint: filterFp,
+				resumeFromIndex: i + 1,
+				jobCount,
+				matched: [...matched],
+			});
+		}
 		if (requestDelayMs > 0 && i < slugs.length - 1) await sleep(requestDelayMs);
 	}
 
-	const matched: Job[] = [];
-	const dropped: Array<{ job: Job; reason: string }> = [];
-	for (const job of allJobs) {
-		const result = execFilter(job, filters, cfg);
-		if (result.passed) {
-			matched.push(job);
-		} else {
-			dropped.push({ job, reason: result.reason ?? 'unknown' });
-		}
-	}
+	if (checkpointFile) clearCheckpoint(checkpointFile);
 
 	const seenIds = seenStore.load();
 	const newMatches = matched.filter((j) => !seenIds.has(j.id));
 
 	return {
 		slugCount: slugs.length,
-		jobCount: allJobs.length,
+		jobCount,
 		matched,
 		newMatches,
 		dropped,

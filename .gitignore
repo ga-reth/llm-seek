@@ -3,3 +3,4 @@ data/slugs.json
 data/seen.json
 node_modules/
 todo.md
+.claude/worktrees/*
