@@ -4,3 +4,4 @@ data/seen.json
 node_modules/
 todo.md
 .claude/worktrees/*
+docs
