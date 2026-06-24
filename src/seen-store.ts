@@ -7,6 +7,7 @@ interface SeenEntry {
 }
 
 interface StoredData {
+	configFingerprint?: string;
 	entries: SeenEntry[];
 }
 
@@ -14,6 +15,7 @@ export class SeenStore {
 	constructor(
 		private readonly file: string,
 		private readonly ttlDays: number,
+		private readonly configFingerprint?: string,
 	) {}
 
 	load(): Set<string> {
@@ -21,6 +23,10 @@ export class SeenStore {
 		try {
 			const raw = readFileSync(this.file, 'utf-8');
 			const data = JSON.parse(raw) as StoredData;
+			if (this.configFingerprint && data.configFingerprint !== this.configFingerprint) {
+				console.log('[seen] config changed — clearing seen store for fresh run');
+				return new Set();
+			}
 			return new Set(
 				data.entries
 					.filter((e) => new Date(e.seenAt).getTime() > cutoff)
@@ -51,7 +57,7 @@ export class SeenStore {
 			.filter((id) => !existingSet.has(id))
 			.map((id): SeenEntry => ({ id, seenAt: now }));
 
-		const merged: StoredData = { entries: [...existingEntries, ...toAdd] };
+		const merged: StoredData = { configFingerprint: this.configFingerprint, entries: [...existingEntries, ...toAdd] };
 		mkdirSync(dirname(this.file), { recursive: true });
 		writeFileSync(this.file, JSON.stringify(merged, null, 2));
 	}

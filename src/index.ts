@@ -47,6 +47,7 @@ async function main(): Promise<void> {
 	const seenStore = new SeenStore(
 		config.seenStore.file,
 		config.seenStore.ttlDays,
+		JSON.stringify(config.filters),
 	);
 
 	const result = await exec(source, slugs, filters, seenStore, config, {
