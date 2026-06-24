@@ -1,5 +1,5 @@
 {
-	"name": "job-seek",
+	"name": "llm-seek",
 	"scripts": {
 		"run": "bun src/index.ts",
 		"discover": "bun src/discover-slugs.ts",

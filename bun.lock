@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "job-seek",
+      "name": "llm-seek",
       "dependencies": {
         "zod": "^4.4.3",
       },
