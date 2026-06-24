@@ -39,7 +39,7 @@ export const config = {
 		includeIfDateMissing: true,
 		remoteOnly: false,
 		allowedLocations: [] as string[],
-		allowedEmploymentTypes: ['FullTime', 'Contract'] as string[],
+		allowedEmploymentTypes: [] as string[],
 	},
 	seenStore: {
 		file: 'data/seen.json',
