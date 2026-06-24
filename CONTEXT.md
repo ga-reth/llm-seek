@@ -11,16 +11,12 @@ A company identifier derived from the Ashby job board URL path (e.g. `ramp`, `re
 _Avoid_: Company ID, board name, tenant
 
 **Slug Source**:
-A provider of Slugs. Common Crawl CDX and the manual list are the two Slug Sources. Multiple Slug Sources are merged and deduplicated before a Run.
+A provider of Slugs. Currently: Harvested Slugs from Common Crawl CDX, with built-in defaults as a fallback. Sources are deduplicated before a Run.
 _Avoid_: Slug provider, discovery source
 
 **Harvested Slug**:
-A Slug discovered by querying the Common Crawl CDX index. Updated monthly.
+A Slug discovered by querying the Common Crawl CDX index. Updated monthly. If none are available, the system falls back to a built-in default list.
 _Avoid_: Crawled slug, discovered slug
-
-**Manual Slug**:
-A Slug added by hand to `data/slugs.manual.json`. Takes effect immediately without waiting for the next Discovery.
-_Avoid_: Custom slug, override slug
 
 **Discovery**:
 The monthly process of querying Common Crawl for Harvested Slugs and writing `data/slugs.json`. Runs independently of the daily Run.

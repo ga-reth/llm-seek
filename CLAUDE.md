@@ -25,7 +25,7 @@ The system has two independent entry points:
 **`src/discover-slugs.ts`** — one-off, monthly. Queries the Common Crawl CDX index (`src/slugs/common-crawl.ts`) for URLs matching `jobs.ashbyhq.com/*`, extracts slugs, writes `data/slugs.json`.
 
 **`src/index.ts`** — daily Run. Pipeline:
-1. Load slugs: merges `data/slugs.json` (harvested) + `data/slugs.manual.json` (manual) and deduplicates (`src/slugs/slug-source.ts`)
+1. Load slugs: reads `data/slugs.json` (harvested); falls back to built-in defaults if absent or empty (`src/slugs/slug-source.ts`)
 2. Fetch jobs: `AshbySource` (`src/sources/ashby.ts`) calls `https://api.ashbyhq.com/posting-api/job-board/{slug}`, validates with Zod, returns `Job[]`
 3. Filter pipeline: runs each `JobFilter` in order; first failure short-circuits. Filters live in `src/filter.ts`
 4. Dedup via `SeenStore` (`src/seen-store.ts`): loads `data/seen.json`, filters to New Matches, saves new IDs on completion
