@@ -5,3 +5,4 @@ node_modules/
 todo.md
 .claude/worktrees/*
 docs
+src/config.ts
