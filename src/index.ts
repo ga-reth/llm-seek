@@ -8,11 +8,14 @@ import {
 	TitleExcludeFilter,
 	TitleIncludeFilter,
 } from './filter';
+import { createLogger } from './lib/logger';
 import { padded } from './lib/utils';
 import { SeenStore } from './seen-store';
 import { loadSlugs } from './slugs/slug-source';
 import { AshbySource } from './sources/ashby';
 import type { Job } from './types';
+
+const log = createLogger('run');
 
 const verbose = process.argv.includes('--verbose');
 const dryRunFlag = process.argv.indexOf('--dryRun');
@@ -28,9 +31,9 @@ async function main(): Promise<void> {
 
 	if (dryRun) {
 		slugs = slugs.slice(0, dryRunCount);
-		console.log(`[run] dry run — ${slugs.length} slugs, no files written`);
+		log.info('dry run', { slugCount: slugs.length });
 	} else {
-		console.log(`[run] loaded ${slugs.length} slugs`);
+		log.info('slugs ready', { slugCount: slugs.length });
 	}
 
 	const source = new AshbySource(
@@ -58,10 +61,18 @@ async function main(): Promise<void> {
 	if (!dryRun) {
 		mkdirSync('out', { recursive: true });
 		writeFileSync('out/matches.json', JSON.stringify(result.matched, null, 2));
+		log.info('wrote file', {
+			file: 'out/matches.json',
+			count: result.matched.length,
+		});
 		writeFileSync(
 			'out/new_matches.json',
 			JSON.stringify(result.newMatches, null, 2),
 		);
+		log.info('wrote file', {
+			file: 'out/new_matches.json',
+			count: result.newMatches.length,
+		});
 		seenStore.save(result.newMatches.map((j) => j.id));
 	}
 
@@ -118,6 +129,6 @@ function printTable(jobs: Job[]): void {
 }
 
 main().catch((err) => {
-	console.error('[run] fatal:', err);
+	log.error('fatal', { err: String(err) });
 	process.exit(1);
 });

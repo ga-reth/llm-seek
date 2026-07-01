@@ -1,5 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { createLogger } from './lib/logger';
+
+const log = createLogger('seen');
 
 interface SeenEntry {
 	id: string;
@@ -27,16 +30,14 @@ export class SeenStore {
 				this.configFingerprint &&
 				data.configFingerprint !== this.configFingerprint
 			) {
-				console.log(
-					'[seen] config changed — clearing seen store for fresh run',
-				);
+				log.info('config changed — clearing seen store for fresh run');
 				return new Set();
 			}
-			return new Set(
-				data.entries
-					.filter((e) => new Date(e.seenAt).getTime() > cutoff)
-					.map((e) => e.id),
-			);
+			const live = data.entries.filter((e) => new Date(e.seenAt).getTime() > cutoff);
+			const prunedCount = data.entries.length - live.length;
+			const result = new Set(live.map((e) => e.id));
+			log.info('store loaded', { seenCount: result.size, prunedCount });
+			return result;
 		} catch {
 			return new Set();
 		}
@@ -68,6 +69,7 @@ export class SeenStore {
 		};
 		mkdirSync(dirname(this.file), { recursive: true });
 		writeFileSync(this.file, JSON.stringify(merged, null, 2));
+		log.info('store saved', { newCount: toAdd.length, totalCount: merged.entries.length });
 	}
 
 	private cutoff(): number {

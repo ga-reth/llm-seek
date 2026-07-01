@@ -1,4 +1,7 @@
 import { config } from '../config';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('cc');
 
 const COLLINFO_URL = 'https://index.commoncrawl.org/collinfo.json';
 const SLUG_RE = /jobs\.ashbyhq\.com\/([^/?#]+)/i;
@@ -34,7 +37,7 @@ async function queryCrawl(
 		const info = await fetchJson<{ pages: number }>(countUrl, headers);
 		numPages = info.pages ?? 1;
 	} catch (err) {
-		console.warn(`[cc] failed to get page count for ${crawlId}: ${err}`);
+		log.warn('failed to get page count', { crawlId, err: String(err) });
 		return { pages: 0, captures: 0 };
 	}
 
@@ -46,16 +49,16 @@ async function queryCrawl(
 		try {
 			const res = await fetch(pageUrl, { headers });
 			if (res.status === 503) {
-				console.warn(`[cc] 503 on page ${page} of ${crawlId}, skipping`);
+				log.warn('503 on page, skipping', { crawlId, page });
 				continue;
 			}
 			if (!res.ok) {
-				console.warn(`[cc] HTTP ${res.status} on page ${page} of ${crawlId}`);
+				log.warn('HTTP error on page', { crawlId, page, status: res.status });
 				continue;
 			}
 			text = await res.text();
 		} catch (err) {
-			console.warn(`[cc] fetch error page ${page} of ${crawlId}: ${err}`);
+			log.warn('fetch error on page', { crawlId, page, err: String(err) });
 			continue;
 		}
 
@@ -92,9 +95,7 @@ export async function discoverSlugs(): Promise<string[]> {
 	}
 
 	const candidates = collinfo.map((c) => c.id);
-	console.log(
-		`[cc] ${candidates.length} crawls available, targeting ${crawls} successful ones`,
-	);
+	log.info('crawls available', { available: candidates.length, target: crawls });
 
 	const slugs = new Set<string>();
 	let totalPages = 0;
@@ -103,17 +104,15 @@ export async function discoverSlugs(): Promise<string[]> {
 
 	for (const crawlId of candidates) {
 		if (successes >= crawls) break;
-		console.log(`[cc] starting crawl ${crawlId}…`);
+		log.info('starting crawl', { crawlId });
 		const { pages, captures } = await queryCrawl(crawlId, slugs);
 		if (pages > 0) {
 			successes++;
 			totalPages += pages;
 			totalCaptures += captures;
-			console.log(
-				`[cc] ${crawlId}: ${pages} pages, ${captures} captures, ${slugs.size} unique slugs (${successes}/${crawls} done)`,
-			);
+			log.info('crawl complete', { crawlId, pages, captures, uniqueSlugs: slugs.size, successes, target: crawls });
 		} else {
-			console.warn(`[cc] ${crawlId}: unavailable, trying next`);
+			log.warn('crawl unavailable, trying next', { crawlId });
 		}
 	}
 
@@ -123,8 +122,6 @@ export async function discoverSlugs(): Promise<string[]> {
 		);
 	}
 
-	console.log(
-		`[cc] done — ${successes} crawls, ${totalPages} pages, ${totalCaptures} captures, ${slugs.size} unique slugs`,
-	);
+	log.info('discovery complete', { successes, totalPages, totalCaptures, uniqueSlugs: slugs.size });
 	return Array.from(slugs).sort();
 }

@@ -7,7 +7,10 @@ import {
 	writeFileSync,
 } from 'node:fs';
 import { dirname } from 'node:path';
+import { createLogger } from './lib/logger';
 import type { Job } from './types';
+
+const log = createLogger('checkpoint');
 
 export interface CheckpointData {
 	slugFingerprint: string;
@@ -44,21 +47,17 @@ export function loadCheckpoint(
 		stored = JSON.parse(raw) as StoredCheckpoint;
 	} catch (err: unknown) {
 		if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-			console.warn(
-				'[checkpoint] corrupt checkpoint file — discarding, starting fresh',
-			);
+			log.warn('corrupt checkpoint file — discarding, starting fresh');
 		}
 		return null;
 	}
 
 	if (stored.slugFingerprint !== slugFingerprint) {
-		console.warn('[checkpoint] slug list changed — discarding, starting fresh');
+		log.warn('slug list changed — discarding, starting fresh');
 		return null;
 	}
 	if (stored.filterFingerprint !== filterFingerprint) {
-		console.warn(
-			'[checkpoint] filter config changed — discarding, starting fresh',
-		);
+		log.warn('filter config changed — discarding, starting fresh');
 		return null;
 	}
 
@@ -76,11 +75,13 @@ export function saveCheckpoint(file: string, data: CheckpointData): void {
 	const tmp = `${file}.tmp`;
 	writeFileSync(tmp, JSON.stringify(data));
 	renameSync(tmp, file);
+	log.debug('checkpoint saved', { file, resumeFromIndex: data.resumeFromIndex });
 }
 
 export function clearCheckpoint(file: string): void {
 	try {
 		rmSync(file);
+		log.debug('checkpoint cleared', { file });
 	} catch {
 		// already gone
 	}

@@ -1,6 +1,9 @@
 import { z } from 'zod';
+import { createLogger } from '../lib/logger';
 import type { Job } from '../types';
 import type { JobSource } from '.';
+
+const log = createLogger('ashby');
 
 const AshbyJobSchema = z.object({
 	id: z.string(),
@@ -31,17 +34,19 @@ export class AshbySource implements JobSource {
 
 	async fetch(slug: string): Promise<Job[]> {
 		const url = `${BASE}/${slug}?includeCompensation=true`;
+		const t0 = Date.now();
+		log.debug('fetch start', { slug });
 		let res: Response;
 		try {
-			res = await this.fetchWithRetry(url);
+			res = await this.fetchWithRetry(url, slug);
 		} catch (err) {
-			console.warn(`[ashby] fetch error for "${slug}": ${err}`);
+			log.warn('fetch error', { slug, err: String(err) });
 			return [];
 		}
 
 		if (res.status === 404) return [];
 		if (!res.ok) {
-			console.warn(`[ashby] HTTP ${res.status} for "${slug}"`);
+			log.warn('HTTP error', { slug, status: res.status });
 			return [];
 		}
 
@@ -49,20 +54,17 @@ export class AshbySource implements JobSource {
 		try {
 			body = await res.json();
 		} catch {
-			console.warn(`[ashby] invalid JSON for "${slug}"`);
+			log.warn('invalid JSON response', { slug });
 			return [];
 		}
 
 		const parsed = AshbyBoardSchema.safeParse(body);
 		if (!parsed.success) {
-			console.warn(
-				`[ashby] schema mismatch for "${slug}":`,
-				parsed.error.issues[0],
-			);
+			log.warn('schema mismatch', { slug, issue: JSON.stringify(parsed.error.issues[0]) });
 			return [];
 		}
 
-		return parsed.data.jobs
+		const result = parsed.data.jobs
 			.filter((j) => j.isListed !== false)
 			.map(
 				(j): Job => ({
@@ -78,16 +80,18 @@ export class AshbySource implements JobSource {
 					raw: j,
 				}),
 			);
+		log.debug('fetch complete', { slug, jobCount: result.length, durationMs: Date.now() - t0 });
+		return result;
 	}
 
-	private async fetchWithRetry(url: string): Promise<Response> {
+	private async fetchWithRetry(url: string, slug: string): Promise<Response> {
 		const headers = { 'User-Agent': 'JobSeek/0.1' };
 		let delay = 2000;
 		for (let attempt = 0; attempt <= 3; attempt++) {
 			const res = await this.fetchFn(url, { headers });
 			if (res.status !== 429) return res;
 			if (attempt < 3) {
-				console.warn(`[ashby] 429 on ${url}, retrying in ${delay}ms`);
+				log.info('rate limited, retrying', { slug, attempt, delayMs: delay });
 				await sleep(delay);
 				delay *= 2;
 			}
