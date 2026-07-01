@@ -29,16 +29,9 @@ async function main(): Promise<void> {
 		log.info('slugs ready', { slugCount: slugs.length });
 	}
 
-	const seenStore = new SeenStore(
-		config.seenStore.file,
-		config.seenStore.ttlDays,
-		JSON.stringify(config.filters),
-	);
+	const seenStore = new SeenStore('data/seen.json', JSON.stringify(config));
 
-	const { jobs, slugCount, jobCount } = await scan(slugs, {
-		requestDelayMs: config.sources.ashby.requestDelayMs,
-		checkpointFile: dryRun ? null : config.run.checkpointFile,
-	});
+	const { jobs, slugCount, jobCount } = await scan(slugs, { dryRun });
 
 	const { matched, dropped } = filter(jobs, config);
 

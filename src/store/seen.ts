@@ -4,6 +4,8 @@ import { createLogger } from '../lib/logger';
 
 const log = createLogger('seen');
 
+const TTL_DAYS = 45;
+
 interface SeenEntry {
 	id: string;
 	seenAt: string;
@@ -17,7 +19,6 @@ interface StoredData {
 export class SeenStore {
 	constructor(
 		private readonly file: string,
-		private readonly ttlDays: number,
 		private readonly configFingerprint?: string,
 	) {}
 
@@ -73,6 +74,6 @@ export class SeenStore {
 	}
 
 	private cutoff(): number {
-		return Date.now() - this.ttlDays * 86_400_000;
+		return Date.now() - TTL_DAYS * 86_400_000;
 	}
 }

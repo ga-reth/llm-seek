@@ -12,10 +12,10 @@ export interface JobFilter {
 
 export class TitleIncludeFilter implements JobFilter {
 	passes(job: Job, cfg: typeof config): FilterResult {
-		const keywords = cfg.filters.titleInclude;
+		const keywords = cfg.titleInclude;
 		if (keywords.length === 0) return { passed: true };
 		const hit = keywords.some((kw) =>
-			matches(job.title, kw, cfg.filters.matchMode),
+			matches(job.title, kw, cfg.matchMode),
 		);
 		return hit
 			? { passed: true }
@@ -28,10 +28,10 @@ export class TitleIncludeFilter implements JobFilter {
 
 export class TitleExcludeFilter implements JobFilter {
 	passes(job: Job, cfg: typeof config): FilterResult {
-		const keywords = cfg.filters.titleExclude;
+		const keywords = cfg.titleExclude;
 		if (keywords.length === 0) return { passed: true };
 		const hit = keywords.find((kw) =>
-			matches(job.title, kw, cfg.filters.matchMode),
+			matches(job.title, kw, cfg.matchMode),
 		);
 		return hit
 			? { passed: false, reason: `title contains excluded keyword "${hit}"` }
@@ -42,7 +42,7 @@ export class TitleExcludeFilter implements JobFilter {
 export class MaxAgeFilter implements JobFilter {
 	passes(job: Job, cfg: typeof config): FilterResult {
 		if (job.publishedAt === null) {
-			if (cfg.filters.includeIfDateMissing) {
+			if (cfg.includeIfDateMissing) {
 				log.warn('job has no publishedAt — including by default', {
 					id: job.id,
 				});
@@ -51,18 +51,18 @@ export class MaxAgeFilter implements JobFilter {
 			return { passed: false, reason: 'publishedAt missing' };
 		}
 		const ageDays = (Date.now() - job.publishedAt.getTime()) / 86_400_000;
-		return ageDays <= cfg.filters.maxAgeDays
+		return ageDays <= cfg.maxAgeDays
 			? { passed: true }
 			: {
 					passed: false,
-					reason: `too old (${Math.floor(ageDays)}d > ${cfg.filters.maxAgeDays}d)`,
+					reason: `too old (${Math.floor(ageDays)}d > ${cfg.maxAgeDays}d)`,
 				};
 	}
 }
 
 export class LocationFilter implements JobFilter {
 	passes(job: Job, cfg: typeof config): FilterResult {
-		const { remoteOnly, allowedLocations } = cfg.filters;
+		const { remoteOnly, allowedLocations } = cfg;
 		if (!remoteOnly && allowedLocations.length === 0) return { passed: true };
 		if (remoteOnly && job.isRemote) return { passed: true };
 		if (allowedLocations.length > 0 && job.location) {
@@ -80,7 +80,7 @@ export class LocationFilter implements JobFilter {
 
 export class EmploymentTypeFilter implements JobFilter {
 	passes(job: Job, cfg: typeof config): FilterResult {
-		const allowed = cfg.filters.allowedEmploymentTypes;
+		const allowed = cfg.allowedEmploymentTypes;
 		if (allowed.length === 0) return { passed: true };
 		if (job.employmentType === null) return { passed: true };
 		return allowed.includes(job.employmentType)

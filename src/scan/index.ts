@@ -11,6 +11,9 @@ import {
 
 const log = createLogger('scan');
 
+const REQUEST_DELAY_MS = 600;
+const CHECKPOINT_FILE = 'data/checkpoint.json';
+
 export interface ScanResult {
 	slugCount: number;
 	jobCount: number;
@@ -21,13 +24,12 @@ const sources: ATSSource[] = [new AshbySource()];
 
 export async function scan(
 	slugs: string[],
-	{
-		requestDelayMs = 0,
-		checkpointFile = null,
-	}: { requestDelayMs?: number; checkpointFile?: string | null } = {},
+	{ dryRun = false }: { dryRun?: boolean } = {},
 ): Promise<ScanResult> {
 	const startMs = Date.now();
 	log.info('scan start', { slugCount: slugs.length });
+
+	const checkpointFile = dryRun ? null : CHECKPOINT_FILE;
 
 	const slugFp = checkpointFile ? computeSlugFingerprint(slugs) : '';
 
@@ -72,7 +74,7 @@ export async function scan(
 			});
 		}
 
-		if (requestDelayMs > 0 && i < slugs.length - 1) await sleep(requestDelayMs);
+		if (i < slugs.length - 1) await sleep(REQUEST_DELAY_MS);
 	}
 
 	if (checkpointFile) clearCheckpoint(checkpointFile);

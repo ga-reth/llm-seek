@@ -25,8 +25,8 @@ function makeJob(overrides: Partial<Job> = {}): Job {
 	};
 }
 
-function cfg(overrides: Partial<typeof config.filters> = {}): typeof config {
-	return { ...config, filters: { ...config.filters, ...overrides } };
+function cfg(overrides: Partial<typeof config> = {}): typeof config {
+	return { ...config, ...overrides };
 }
 
 describe('TitleIncludeFilter', () => {

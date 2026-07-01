@@ -11,7 +11,7 @@ import { SeenStore } from '../src/store/seen';
 const TEST_FILE = 'data/seen-test.json';
 
 function store(): SeenStore {
-	return new SeenStore(TEST_FILE, 45);
+	return new SeenStore(TEST_FILE);
 }
 
 beforeEach(() => {
