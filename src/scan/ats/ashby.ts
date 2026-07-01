@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { createLogger } from '../lib/logger';
-import type { Job } from '../types';
-import type { JobSource } from '.';
+import { createLogger } from '../../lib/logger';
+import type { Job } from '../../types';
+import type { JobSource } from '..';
 
 const log = createLogger('ashby');
 

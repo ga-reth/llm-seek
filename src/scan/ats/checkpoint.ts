@@ -7,17 +7,16 @@ import {
 	writeFileSync,
 } from 'node:fs';
 import { dirname } from 'node:path';
-import { createLogger } from './lib/logger';
-import type { Job } from './types';
+import { createLogger } from '../../lib/logger';
+import type { Job } from '../../types';
 
 const log = createLogger('checkpoint');
 
 export interface CheckpointData {
 	slugFingerprint: string;
-	filterFingerprint: string;
 	resumeFromIndex: number;
 	jobCount: number;
-	matched: Job[];
+	jobs: Job[];
 }
 
 interface StoredJob extends Omit<Job, 'publishedAt'> {
@@ -26,10 +25,9 @@ interface StoredJob extends Omit<Job, 'publishedAt'> {
 
 interface StoredCheckpoint {
 	slugFingerprint: string;
-	filterFingerprint: string;
 	resumeFromIndex: number;
 	jobCount: number;
-	matched: StoredJob[];
+	jobs: StoredJob[];
 }
 
 export function computeSlugFingerprint(slugs: string[]): string {
@@ -39,7 +37,6 @@ export function computeSlugFingerprint(slugs: string[]): string {
 export function loadCheckpoint(
 	file: string,
 	slugFingerprint: string,
-	filterFingerprint: string,
 ): CheckpointData | null {
 	let stored: StoredCheckpoint;
 	try {
@@ -56,14 +53,10 @@ export function loadCheckpoint(
 		log.warn('slug list changed — discarding, starting fresh');
 		return null;
 	}
-	if (stored.filterFingerprint !== filterFingerprint) {
-		log.warn('filter config changed — discarding, starting fresh');
-		return null;
-	}
 
 	return {
 		...stored,
-		matched: stored.matched.map((j) => ({
+		jobs: stored.jobs.map((j) => ({
 			...j,
 			publishedAt: j.publishedAt ? new Date(j.publishedAt) : null,
 		})),

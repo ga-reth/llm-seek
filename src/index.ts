@@ -1,18 +1,12 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { config } from './config';
-import { exec } from './exec';
-import {
-	EmploymentTypeFilter,
-	LocationFilter,
-	MaxAgeFilter,
-	TitleExcludeFilter,
-	TitleIncludeFilter,
-} from './filter';
+import { filter } from './filter';
 import { createLogger } from './lib/logger';
 import { padded } from './lib/utils';
-import { SeenStore } from './seen-store';
-import { loadSlugs } from './slugs/slug-source';
-import { AshbySource } from './sources/ashby';
+import { scan } from './scan';
+import { AshbySource } from './scan/ats/ashby';
+import { loadSlugs } from './slug-discover/slug-source';
+import { SeenStore } from './store/seen';
 import type { Job } from './types';
 
 const log = createLogger('run');
@@ -36,61 +30,50 @@ async function main(): Promise<void> {
 		log.info('slugs ready', { slugCount: slugs.length });
 	}
 
-	const source = new AshbySource(
-		globalThis.fetch,
-		// config.sources.ashby.requestDelayMs,
-	);
-	const filters = [
-		new TitleIncludeFilter(),
-		new TitleExcludeFilter(),
-		new MaxAgeFilter(),
-		new LocationFilter(),
-		new EmploymentTypeFilter(),
-	];
+	const source = new AshbySource();
 	const seenStore = new SeenStore(
 		config.seenStore.file,
 		config.seenStore.ttlDays,
 		JSON.stringify(config.filters),
 	);
 
-	const result = await exec(source, slugs, filters, seenStore, config, {
+	const { jobs, slugCount, jobCount } = await scan(source, slugs, {
 		requestDelayMs: config.sources.ashby.requestDelayMs,
-		dryRun,
+		checkpointFile: dryRun ? null : config.run.checkpointFile,
 	});
+
+	const { matched, dropped } = filter(jobs, config);
+
+	const seenIds = seenStore.load();
+	const newMatches = matched.filter((j) => !seenIds.has(j.id));
 
 	if (!dryRun) {
 		mkdirSync('out', { recursive: true });
-		writeFileSync('out/matches.json', JSON.stringify(result.matched, null, 2));
-		log.info('wrote file', {
-			file: 'out/matches.json',
-			count: result.matched.length,
-		});
-		writeFileSync(
-			'out/new_matches.json',
-			JSON.stringify(result.newMatches, null, 2),
-		);
+		writeFileSync('out/matches.json', JSON.stringify(matched, null, 2));
+		log.info('wrote file', { file: 'out/matches.json', count: matched.length });
+		writeFileSync('out/new_matches.json', JSON.stringify(newMatches, null, 2));
 		log.info('wrote file', {
 			file: 'out/new_matches.json',
-			count: result.newMatches.length,
+			count: newMatches.length,
 		});
-		seenStore.save(result.newMatches.map((j) => j.id));
+		seenStore.save(newMatches.map((j) => j.id));
 	}
 
-	const summary = `${result.slugCount} slugs · ${result.jobCount} jobs fetched · ${result.matched.length} matched · ${result.newMatches.length} new`;
+	const summary = `${slugCount} slugs · ${jobCount} jobs fetched · ${matched.length} matched · ${newMatches.length} new`;
 	console.log(`\n[run] ${summary}\n`);
 
-	if (result.newMatches.length > 0) {
-		printTable(result.newMatches);
+	if (newMatches.length > 0) {
+		printTable(newMatches);
 	} else {
 		console.log('No new matches.');
 	}
 
-	if (verbose && result.dropped.length > 0) {
-		console.log(`\nDROPPED (${result.dropped.length})`);
+	if (verbose && dropped.length > 0) {
+		console.log(`\nDROPPED (${dropped.length})`);
 		console.log('─'.repeat(80));
 		console.log(`${padded('Title', 35) + padded('Company', 18)}Reason`);
 		console.log('─'.repeat(80));
-		for (const { job, reason } of result.dropped) {
+		for (const { job, reason } of dropped) {
 			console.log(padded(job.title, 35) + padded(job.company, 18) + reason);
 		}
 	}

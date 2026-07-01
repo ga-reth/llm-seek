@@ -6,7 +6,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from 'node:fs';
-import { SeenStore } from '../src/seen-store';
+import { SeenStore } from '../src/store/seen';
 
 const TEST_FILE = 'data/seen-test.json';
 

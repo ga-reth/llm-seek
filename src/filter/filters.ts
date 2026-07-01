@@ -1,24 +1,13 @@
-import type { config } from './config';
-import { createLogger } from './lib/logger';
-import { matches } from './lib/text';
-import type { FilterResult, Job } from './types';
+import type { config } from '../config';
+import { createLogger } from '../lib/logger';
+import { matches } from '../lib/text';
+import type { Job } from '../types';
+import type { FilterResult } from '.';
 
 const log = createLogger('filter');
 
 export interface JobFilter {
 	passes(job: Job, cfg: typeof config): FilterResult;
-}
-
-export function exec(
-	job: Job,
-	filters: JobFilter[],
-	cfg: typeof config,
-): FilterResult {
-	for (const filter of filters) {
-		const result = filter.passes(job, cfg);
-		if (!result.passed) return result;
-	}
-	return { passed: true };
 }
 
 export class TitleIncludeFilter implements JobFilter {
@@ -54,7 +43,9 @@ export class MaxAgeFilter implements JobFilter {
 	passes(job: Job, cfg: typeof config): FilterResult {
 		if (job.publishedAt === null) {
 			if (cfg.filters.includeIfDateMissing) {
-				log.warn('job has no publishedAt — including by default', { id: job.id });
+				log.warn('job has no publishedAt — including by default', {
+					id: job.id,
+				});
 				return { passed: true };
 			}
 			return { passed: false, reason: 'publishedAt missing' };

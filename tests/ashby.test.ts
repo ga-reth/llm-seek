@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { AshbySource } from '../src/sources/ashby';
+import { AshbySource } from '../src/scan/ats/ashby';
 
 const fixtureResponse = require('./fixtures/ashby.json');
 

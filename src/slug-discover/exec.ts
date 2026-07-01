@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { createLogger } from './lib/logger';
-import { discoverSlugs } from './slugs/common-crawl';
+import { createLogger } from '../lib/logger';
+import { discoverSlugs } from './common-crawl';
 
 const log = createLogger('discover');
 

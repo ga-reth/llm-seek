@@ -10,8 +10,3 @@ export interface Job {
 	url: string;
 	raw: unknown;
 }
-
-export interface FilterResult {
-	passed: boolean;
-	reason?: string;
-}

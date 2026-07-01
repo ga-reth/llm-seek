@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { createLogger } from './lib/logger';
+import { createLogger } from '../lib/logger';
 
 const log = createLogger('seen');
 

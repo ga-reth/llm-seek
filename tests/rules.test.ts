@@ -6,7 +6,7 @@ import {
 	MaxAgeFilter,
 	TitleExcludeFilter,
 	TitleIncludeFilter,
-} from '../src/filter';
+} from '../src/filter/filters';
 import type { Job } from '../src/types';
 
 function makeJob(overrides: Partial<Job> = {}): Job {
