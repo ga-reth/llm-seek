@@ -1,3 +1,7 @@
+export interface ATSSource {
+	fetch(slug: string): Promise<Job[]>;
+}
+
 export interface Job {
 	id: string;
 	source: string;

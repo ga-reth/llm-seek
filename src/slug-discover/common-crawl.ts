@@ -1,17 +1,12 @@
-import { config } from '../config';
+import { sleep } from 'bun';
 import { createLogger } from '../lib/logger';
 
 const log = createLogger('cc');
 
 const COLLINFO_URL = 'https://index.commoncrawl.org/collinfo.json';
-const SLUG_RE = /jobs\.ashbyhq\.com\/([^/?#]+)/i;
 
 interface CollInfo {
 	id: string;
-}
-
-function sleep(ms: number): Promise<void> {
-	return new Promise((r) => setTimeout(r, ms));
 }
 
 async function fetchJson<T>(
@@ -25,11 +20,14 @@ async function fetchJson<T>(
 
 async function queryCrawl(
 	crawlId: string,
+	cdxPattern: string,
+	slugRe: RegExp,
 	slugs: Set<string>,
+	requestDelayMs: number,
+	userAgent: string,
 ): Promise<{ pages: number; captures: number }> {
-	const { requestDelayMs, userAgent } = config.discovery.ashby;
 	const headers = { 'User-Agent': userAgent };
-	const base = `https://index.commoncrawl.org/${crawlId}-index?url=jobs.ashbyhq.com%2F*&output=json&fl=url`;
+	const base = `https://index.commoncrawl.org/${crawlId}-index?url=${encodeURIComponent(cdxPattern)}&output=json&fl=url`;
 
 	const countUrl = `${base}&showNumPages=true`;
 	let numPages = 1;
@@ -67,7 +65,7 @@ async function queryCrawl(
 			try {
 				const obj = JSON.parse(line) as { url?: string };
 				if (obj.url) {
-					const m = obj.url.match(SLUG_RE);
+					const m = obj.url.match(slugRe);
 					if (m?.[1]) {
 						slugs.add(m[1].toLowerCase());
 						captures++;
@@ -82,14 +80,22 @@ async function queryCrawl(
 	return { pages: numPages, captures };
 }
 
-export async function discoverSlugs(): Promise<string[]> {
-	const { crawls, userAgent } = config.discovery.ashby;
+export interface CDXOptions {
+	crawls: number;
+	requestDelayMs: number;
+	userAgent: string;
+}
+
+export async function discoverSlugsViaCDX(
+	cdxPattern: string,
+	slugRe: RegExp,
+	options: CDXOptions,
+): Promise<string[]> {
+	const { crawls, requestDelayMs, userAgent } = options;
 
 	let collinfo: CollInfo[];
 	try {
-		collinfo = await fetchJson<CollInfo[]>(COLLINFO_URL, {
-			'User-Agent': userAgent,
-		});
+		collinfo = await fetchJson<CollInfo[]>(COLLINFO_URL, { 'User-Agent': userAgent });
 	} catch (err) {
 		throw new Error(`[cc] failed to fetch collinfo: ${err}`);
 	}
@@ -105,7 +111,7 @@ export async function discoverSlugs(): Promise<string[]> {
 	for (const crawlId of candidates) {
 		if (successes >= crawls) break;
 		log.info('starting crawl', { crawlId });
-		const { pages, captures } = await queryCrawl(crawlId, slugs);
+		const { pages, captures } = await queryCrawl(crawlId, cdxPattern, slugRe, slugs, requestDelayMs, userAgent);
 		if (pages > 0) {
 			successes++;
 			totalPages += pages;

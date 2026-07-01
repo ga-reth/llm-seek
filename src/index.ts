@@ -4,7 +4,6 @@ import { filter } from './filter';
 import { createLogger } from './lib/logger';
 import { padded } from './lib/utils';
 import { scan } from './scan';
-import { AshbySource } from './scan/ats/ashby';
 import { loadSlugs } from './slug-discover/slug-source';
 import { SeenStore } from './store/seen';
 import type { Job } from './types';
@@ -30,14 +29,13 @@ async function main(): Promise<void> {
 		log.info('slugs ready', { slugCount: slugs.length });
 	}
 
-	const source = new AshbySource();
 	const seenStore = new SeenStore(
 		config.seenStore.file,
 		config.seenStore.ttlDays,
 		JSON.stringify(config.filters),
 	);
 
-	const { jobs, slugCount, jobCount } = await scan(source, slugs, {
+	const { jobs, slugCount, jobCount } = await scan(slugs, {
 		requestDelayMs: config.sources.ashby.requestDelayMs,
 		checkpointFile: dryRun ? null : config.run.checkpointFile,
 	});

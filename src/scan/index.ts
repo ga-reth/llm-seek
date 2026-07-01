@@ -1,5 +1,7 @@
+import { sleep } from 'bun';
 import { createLogger } from '../lib/logger';
-import type { Job } from '../types';
+import { AshbySource } from '../providers/ashby/scan';
+import type { Job, ATSSource } from '../types';
 import {
 	clearCheckpoint,
 	computeSlugFingerprint,
@@ -9,22 +11,15 @@ import {
 
 const log = createLogger('scan');
 
-export interface JobSource {
-	fetch(slug: string): Promise<Job[]>;
-}
-
 export interface ScanResult {
 	slugCount: number;
 	jobCount: number;
 	jobs: Job[];
 }
 
-function sleep(ms: number): Promise<void> {
-	return new Promise((r) => setTimeout(r, ms));
-}
+const sources: ATSSource[] = [new AshbySource()];
 
 export async function scan(
-	source: JobSource,
 	slugs: string[],
 	{
 		requestDelayMs = 0,
@@ -57,12 +52,14 @@ export async function scan(
 		const slug = slugs[i];
 		const slugStartMs = Date.now();
 		log.debug('fetch start', { slug, index: i, total: slugs.length });
-		const fetched = await source.fetch(slug);
-		jobCount += fetched.length;
-		jobs.push(...fetched);
+		for (const source of sources) {
+			const fetched = await source.fetch(slug);
+			jobCount += fetched.length;
+			jobs.push(...fetched);
+		}
 		log.debug('fetch complete', {
 			slug,
-			jobCount: fetched.length,
+			jobCount: jobs.length,
 			durationMs: Date.now() - slugStartMs,
 		});
 

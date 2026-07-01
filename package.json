@@ -2,7 +2,7 @@
 	"name": "llm-seek",
 	"scripts": {
 		"run": "bun src/index.ts",
-		"discover": "bun src/discover-slugs.ts",
+		"discover": "bun src/slug-discover/exec.ts",
 		"test": "bun test",
 		"format": "biome format --write",
 		"check": "biome lint",

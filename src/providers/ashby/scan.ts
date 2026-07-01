@@ -1,7 +1,7 @@
+import { sleep } from 'bun';
 import { z } from 'zod';
 import { createLogger } from '../../lib/logger';
-import type { Job } from '../../types';
-import type { JobSource } from '..';
+import type { Job, ATSSource } from '../../types';
 
 const log = createLogger('ashby');
 
@@ -25,11 +25,7 @@ const BASE = 'https://api.ashbyhq.com/posting-api/job-board';
 
 type FetchFn = typeof globalThis.fetch;
 
-function sleep(ms: number): Promise<void> {
-	return new Promise((r) => setTimeout(r, ms));
-}
-
-export class AshbySource implements JobSource {
+export class AshbySource implements ATSSource {
 	constructor(private readonly fetchFn: FetchFn = globalThis.fetch) {}
 
 	async fetch(slug: string): Promise<Job[]> {
@@ -60,7 +56,10 @@ export class AshbySource implements JobSource {
 
 		const parsed = AshbyBoardSchema.safeParse(body);
 		if (!parsed.success) {
-			log.warn('schema mismatch', { slug, issue: JSON.stringify(parsed.error.issues[0]) });
+			log.warn('schema mismatch', {
+				slug,
+				issue: JSON.stringify(parsed.error.issues[0]),
+			});
 			return [];
 		}
 
@@ -80,7 +79,11 @@ export class AshbySource implements JobSource {
 					raw: j,
 				}),
 			);
-		log.debug('fetch complete', { slug, jobCount: result.length, durationMs: Date.now() - t0 });
+		log.debug('fetch complete', {
+			slug,
+			jobCount: result.length,
+			durationMs: Date.now() - t0,
+		});
 		return result;
 	}
 
